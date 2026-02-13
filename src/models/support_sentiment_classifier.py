@@ -6,33 +6,28 @@ from sklearn.metrics import classification_report
 import pandas as pd
 
 
-def train_category_classifier(df: pd.DataFrame):
-    """
-    Train a baseline ticket category classification model.
-    """
+def train_support_sentiment_model(df: pd.DataFrame):
+
     X = df["clean_text"]
-    y = df["category"]
+    y = df["support_sentiment"]
 
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+        X, y,
+        test_size=0.2,
+        random_state=42,
+        stratify=y
     )
 
     pipeline = Pipeline([
-        ("tfidf", TfidfVectorizer(
-            max_features=5000,
-            ngram_range=(1, 2)
-        )),
-        ("clf", LogisticRegression(
-            max_iter=1000,
-            n_jobs=-1
-        ))
+        ("tfidf", TfidfVectorizer(max_features=5000, ngram_range=(1, 2))),
+        ("clf", LogisticRegression(max_iter=1000))
     ])
 
     pipeline.fit(X_train, y_train)
 
     y_pred = pipeline.predict(X_test)
 
-    print(" Classification Report:")
+    print("Support Sentiment Classification Report:\n")
     print(classification_report(y_test, y_pred))
 
     return pipeline

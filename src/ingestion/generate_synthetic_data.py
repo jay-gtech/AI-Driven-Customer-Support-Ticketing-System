@@ -39,6 +39,34 @@ CATEGORIES = {
     ]
 }
 
+SUPPORT_SENTIMENTS = {
+    "Calm": [
+        "Please assist with this issue.",
+        "Looking forward to your response.",
+        "Kindly check and update."
+    ],
+    "Frustrated": [
+        "This is getting frustrating.",
+        "I have faced this issue multiple times.",
+        "Not satisfied with the delay."
+    ],
+    "Angry": [
+        "This is completely unacceptable.",
+        "I am extremely disappointed.",
+        "This is very upsetting."
+    ],
+    "Urgent": [
+        "This needs immediate attention.",
+        "Please resolve this urgently.",
+        "This is blocking critical work."
+    ],
+    "Appreciative": [
+        "Thank you for your continued support.",
+        "Really appreciate your quick help.",
+        "Great service so far."
+    ]
+}
+
 PRIORITY_MAP = {
     "Billing": ["High", "Critical"],
     "Bug": ["High", "Critical"],
@@ -53,9 +81,14 @@ PLANS = ["Free", "Pro", "Enterprise"]
 
 def generate_ticket(ticket_id: int, category: str) -> dict:
     subject = random.choice(CATEGORIES[category])
+
+    # Choose emotional tone
+    sentiment_label = random.choice(list(SUPPORT_SENTIMENTS.keys()))
+    emotion_phrase = random.choice(SUPPORT_SENTIMENTS[sentiment_label])
+
     description = (
-        f"{subject}. This issue is impacting my work and needs resolution. "
-        f"Please look into this as soon as possible."
+        f"{subject}. {emotion_phrase} "
+        "This issue is impacting my work."
     )
 
     priority = random.choice(PRIORITY_MAP[category])
@@ -67,8 +100,11 @@ def generate_ticket(ticket_id: int, category: str) -> dict:
         hours=random.randint(0, 23)
     )
 
+    # Smarter SLA simulation
     sla_breached = 1 if priority == "Critical" and random.random() < 0.6 else 0
-    escalated = 1 if sla_breached and plan == "Enterprise" else 0
+
+    # Escalation influenced by sentiment + SLA
+    escalated = 1 if (sentiment_label in ["Angry", "Urgent"] or sla_breached) and plan == "Enterprise" else 0
 
     return {
         "ticket_id": ticket_id,
@@ -80,7 +116,8 @@ def generate_ticket(ticket_id: int, category: str) -> dict:
         "created_at": created_at.strftime("%Y-%m-%d %H:%M:%S"),
         "customer_plan": plan,
         "sla_breached": sla_breached,
-        "escalated": escalated
+        "escalated": escalated,
+        "support_sentiment": sentiment_label
     }
 
 
@@ -103,5 +140,10 @@ if __name__ == "__main__":
     df = generate_dataset(NUM_TICKETS)
     output_path = "data/raw/tickets.csv"
     df.to_csv(output_path, index=False)
+
     print(f" Synthetic dataset created: {output_path}")
+    print("\nCategory Distribution:")
     print(df["category"].value_counts())
+
+    print("\nSupport Sentiment Distribution:")
+    print(df["support_sentiment"].value_counts())
